@@ -11,6 +11,8 @@ Pythonの環境は[Rye](https://github.com/astral-sh/rye?tab=readme-ov-file)で�
 1. VScodeでプロジェクトのルートディレクトリを開く
 1. コマンドパレット(`Ctrl+Shit+P`)を開き，"Dev Container: Rebuild Container"を選択する
 1. 新しいウィンドウでVSCodeが立ち上がる．コンテナ内のユーザ名は `green` としている．
+1. VSCodeの拡張機能で"Jupyter"を入れているため，マジックコマンド `# %%` を使うことで，セル実行することができる
+．(https://code.visualstudio.com/docs/python/jupyter-support-py)
 
 ### Option
 * コンテナ内への拡張機能は下記をインストールするようにしている．必要に応じて追加・削除すること
