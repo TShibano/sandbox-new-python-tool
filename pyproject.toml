@@ -1,0 +1,38 @@
+[project]
+name = "sandbox-new-python-tool"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "TShibano", email = "46261399+TShibano@users.noreply.github.com" }
+]
+dependencies = [
+    "polars[all]>=1.3.0",
+    "numpy>=2.0.1",
+    "pandas>=2.2.2",
+    "pandera[polars]>=0.20.3",
+    "pydantic>=2.8.2",
+    "icecream>=2.1.3",
+    "matplotlib>=3.9.1",
+    "seaborn>=0.13.2",
+    "plotly>=5.23.0",
+    "altair>=5.3.0",
+    "mypy>=1.11.1",
+    "jupyterlab>=4.2.4",
+    "ipykernel>=6.29.5",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sandbox_new_python_tool"]
