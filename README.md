@@ -19,6 +19,8 @@ Pythonの環境は[Rye](https://github.com/astral-sh/rye?tab=readme-ov-file)で�
     * charliermarsh.ruff
     * njpwerner.autodocstring
     * mhutchie.git-graph
+* コンテナ内からGitHubへアクセスしたい場合，下記を参考にすること
+    * https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent?platform=mac
  
 
 ## How to Use Rey
