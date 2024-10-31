@@ -15,16 +15,16 @@ random.seed(42)
 
 def gen_data1(n: int) -> pl.DataFrame:
     ids = list(range(1, n+1, 1))
-    grp1 = random.choices(["A", "B", "C"], weights=[3, 2, 1], k=n)
-    grp2 = random.choices(["X", "Y", "Z"], weights=[3, 2, 1], k=n)
+    grp1 = random.choices(["A", "B", "C", None], weights=[10, 10, 10, 1], k=n)
+    grp2 = random.choices(["X", "Y", "Z", None], weights=[10, 10, 10, 1], k=n)
     val = [random.normalvariate(0, 1) for _ in range(n)]
     data = pl.DataFrame({"id": ids, "group1": grp1, "group2": grp2, "value": val})
     return data
 
 def gen_data2(n: int, id_start) -> pl.DataFrame:
     ids = list(range(id_start+1, id_start+n+1, 1))
-    grp1 = random.choices(["A", "B", "C"], weights=[3, 2, 1], k=n)
-    grp2 = random.choices(["X", "Y", "Z"], weights=[3, 2, 1], k=n)
+    grp1 = random.choices(["A", "B", "C"], weights=[1, 1, 1], k=n)
+    grp2 = random.choices(["X", "Y", "Z"], weights=[1, 1, 1], k=n)
     val = [random.normalvariate(0, 1) for _ in range(n)]
     data = pl.DataFrame({"id": ids, "group1": grp1, "group2": grp2, "value": val})
     return data
@@ -32,7 +32,7 @@ def gen_data2(n: int, id_start) -> pl.DataFrame:
 
 def gen_data_grp_weight() -> pl.DataFrame:
     grp1 = ["A"] * 3 + ["B"] * 3 + ["C"] * 3
-    grp2 = ["A", "B", "C"] * 3
+    grp2 = ["X", "Y", "Z"] * 3
     weight = [random.randint(1, 9) for _ in range(9)]
     data = pl.DataFrame({"group1": grp1, "group2": grp2, "weight": weight})
     return data
@@ -49,3 +49,9 @@ def main():
     weight_data.write_excel("./sample_data/weight_data.xlsx")
 
 main()
+
+# %% check data
+data = pl.read_csv("./sample_data/data1.csv")
+data.head()
+# %%
+data.filter(pl.col("group1").is_null(), pl.col("group2").is_null())
