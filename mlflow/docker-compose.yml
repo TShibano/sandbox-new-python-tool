@@ -24,14 +24,25 @@ services:
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
-        # sleep 10 はMinIOの起動を待つため
-    entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
+    command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
       - minio_data:/data
-      - ./docker-entrypoint.sh:/docker-entrypoint.sh    # スクリプトをコンテナにマウント
+    networks:
+      - mlflow_network
+  minio-init:
+    image: minio/mc
+    container_name: minio-init
+    depends_on:
+        - minio
+    entrypoint: >
+        /bin/sh -c "
+        sleep 30 &&
+        mc alias set myminio http://minio:9000 minio minio123 &&
+        mc mb myminio/mlflow || true;
+        exit 0"
     networks:
       - mlflow_network
 
@@ -80,4 +91,4 @@ volumes:
 
 networks:
   mlflow_network:
-
+    driver: bridge
