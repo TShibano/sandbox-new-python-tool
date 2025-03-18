@@ -1,0 +1,8 @@
+FROM ghcr.io/mlflow/mlflow:v2.20.1
+# root 権限にする
+USER root
+RUN apt-get update && apt-get install -y postgresql-client 
+# psycopg2 をインストール
+RUN pip install --no-cache-dir psycopg2-binary boto3
+# ユーザを戻す
+# USER mlflow    

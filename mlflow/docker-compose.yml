@@ -1,71 +1,94 @@
-#version: '3.8'
+version: '3.8'
 
 services:
   postgres:
-    image: postgres:latest
-    container_name: mlflow_postgres
-    restart: always
+    image: postgres:17.0
+    container_name: postgres
     environment:
+      POSTGRES_DB: mlflow
       POSTGRES_USER: mlflow
-      POSTGRES_PASSWORD: mlflow_password
-      POSTGRES_DB: mlflow_db
-    ports:
-      - "25432:25432"
+      POSTGRES_PASSWORD: mlflow
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mlflow_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mlflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   minio:
-    image: minio/minio
-    container_name: mlflow_minio
-    restart: always
+    image: minio/minio:RELEASE.2025-02-28T09-55-16Z
+    container_name: minio
     environment:
-      MINIO_ROOT_USER: mlflow
-      MINIO_ROOT_PASSWORD: mlflow_password
-    ports:
-      - "9000:9000"  # S3 API
-      - "9001:9001"  # MinIO Web UI
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
     command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - minio_data:/data
+    networks:
+      - mlflow_network
+  minio-init:
+    image: minio/mc
+    container_name: minio-init
+    depends_on:
+        - minio
+    entrypoint: >
+        /bin/sh -c "
+        sleep 30 &&
+        mc alias set myminio http://minio:9000 minio minio123 &&
+        mc mb myminio/mlflow || true;
+        exit 0"
+    networks:
+      - mlflow_network
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:latest
-    container_name: mlflow_server
-    restart: always
-    depends_on:
-      - postgres
-      - minio
+    build: 
+      context: .
+      dockerfile: Dockerfile.mlflow
+    container_name: mlflow
     environment:
-      MLFLOW_TRACKING_URI: http://mlflow_nginx
-      MLFLOW_S3_ENDPOINT_URL: http://mlflow_minio:9000
-      AWS_ACCESS_KEY_ID: mlflow
-      AWS_SECRET_ACCESS_KEY: mlflow_password
+      MLFLOW_TRACKING_URI: postgresql://mlflow:mlflow@postgres:5432/mlflow
+      MLFLOW_ARTIFACT_ROOT: s3://mlflow/
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: minio123
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
     command: >
-      mlflow server 
-      --backend-store-uri postgresql://mlflow:mlflow_password@mlflow_postgres:25432/mlflow_db
-      --artifacts-destination s3://mlflow-artifacts
-      --host 0.0.0.0 --port 15000
+      sh -c "until pg_isready -h postgres -p 5432 -U mlflow; do sleep 1; done &&
+      mlflow server --backend-store-uri postgresql://mlflow:mlflow@postgres:5432/mlflow --default-artifact-root s3://mlflow/ --host 0.0.0.0 --port 5000"
     ports:
-      - "15000:15000"
-    volumes:
-      - mlflow_data:/mlflow
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - mlflow_network
 
   nginx:
-    build:
+    build: 
       context: .
       dockerfile: Dockerfile.nginx
-    container_name: mlflow_nginx
-    restart: always
-    depends_on:
-      - mlflow
+    container_name: nginx
     ports:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./.htpasswd:/etc/nginx/.htpasswd
+    depends_on:
+      - mlflow
+    networks:
+      - mlflow_network
 
 volumes:
   postgres_data:
   minio_data:
-  mlflow_data:
 
+networks:
+  mlflow_network:
+    driver: bridge
