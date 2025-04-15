@@ -8,6 +8,12 @@
     "containerUser": "green",
     // Gitの設定
     "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
+    // Nvim から devcontainer を開くための設定
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {
+        "version": "lts"
+        }
+    },
     // 拡張機能
     "customizations": {
         "vscode": {
