@@ -1,22 +1,9 @@
-# Ubuntuを使用
-FROM ubuntu:24.04
+# Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
+# pythonイメージを使用
+FROM python:3.12-slim-bookworm
 
-# set up Ubuntu >>>>>>>>>>>>>>>>>>>>>>>>>>
-RUN apt-get update && apt-get install -y \
-    sudo \
-    build-essential \
-    tzdata \
-    git \
-    vim \
-    wget \
-    curl \
-    llvm \
-    make \
-    && apt-get upgrade -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-# 最後にcleanとrmでキャッシュファイルを削除することで，イメージを小さくする
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# The installer requires curl (and certificates) to download the release archive
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
 
 # Setting User >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user
@@ -29,17 +16,15 @@ RUN groupadd -g $USER_GID $USER_NAME \
 USER $USER_NAME
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-# Install Rye >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# Rye: https://github.com/astral-sh/rye
-# how to install: https://rye.astral.sh/guide/installation/
-RUN curl -sSf https://rye.astral.sh/get | RYE_INSTALL_OPTION="--yes" bash
-RUN echo 'source "$HOME/.rye/env"' >> ~/.profile
-RUN echo 'source "$HOME/.rye/env"' >> ~/.bashrc
-# 環境変数にパスを通しておかないとDockerfile内でRyeを実行できない
-ENV PATH=/home/$USER_NAME/.rye/shims:${PATH}
-# Shell Completion
-RUN mkdir -p ~/.local/share/bash-completion/completions
-RUN rye self completion > ~/.local/share/bash-completion/completions/rye.bash
-# Update Rye
-RUN rye self update
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# Setting User >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# Download the latest installer
+USER root
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+RUN chmod a+x /uv-installer.sh && chown $USER_NAME:$USER_NAME /uv-installer.sh
+USER $USER_NAME
+# Run the installer then remove it
+RUN sh /uv-installer.sh #&& rm /uv-installer.sh
+
+# Ensure the installed binary is on the `PATH`
+ENV PATH="/green/.local/bin/:$PATH"
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
